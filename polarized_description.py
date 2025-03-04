@@ -8,6 +8,7 @@ import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 import time
+import requests
 
 print("Começo do script")
 
@@ -27,7 +28,7 @@ msg.attach(MIMEText(corpo, "plain"))
 
 
 # Carrega o dataset original (ajuste o nome do arquivo se necessário)
-df = df_small
+df = pd.read_csv("/home_cerberus/disk3/larissa.gomide/oficial/amostraGauss/sampled_SMALL_with_gen_scored.csv")
 print("Carregou a base de dados")
 
 # Função para reescrever frases com um viés específico (positivo ou negativo)
@@ -47,8 +48,8 @@ def rewrite_description(description, sentiment):
     # Faz a requisição à API Pollinations
     response = requests.post(url, headers=headers, json=payload)
 
-    print(f"Status Code: {response.status_code}")
-    print(f"Response Text: {response.text}")
+    #print(f"Status Code: {response.status_code}")
+    #print(f"Response Text: {response.text}")
     
     if response.status_code == 200:
         return response.text
