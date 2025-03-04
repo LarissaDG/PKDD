@@ -4,6 +4,10 @@ from email.mime.multipart import MIMEMultipart
 import time
 import pandas as pd
 from transformers import pipeline
+import smtplib
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
+import time
 
 print("Começo do script")
 
@@ -23,22 +27,35 @@ msg.attach(MIMEText(corpo, "plain"))
 
 
 # Carrega o dataset original (ajuste o nome do arquivo se necessário)
-df = pd.read_csv("/home_cerberus/disk3/larissa.gomide/oficial/amostraGauss/sampled_SMALL_with_gen_scored.csv")
+df = df_small
 print("Carregou a base de dados")
-
-# Inicializa o pipeline com DeepSeek-V3
-pipe = pipeline("text-generation", model="deepseek-ai/DeepSeek-V2", trust_remote_code=True)
-print("Carregou o modelo DeepSeek-V2")
 
 # Função para reescrever frases com um viés específico (positivo ou negativo)
 def rewrite_description(description, sentiment):
-    # Estrutura de mensagens (role: user)
-    messages = [
-        {"role": "user", "content": f"Rewrite the following text to have a tone that is {sentiment}:\n\n{description}"}
-    ]
-    # Gera a resposta com o modelo
-    output = pipe(messages)
-    return output[0]['generated_text'].strip()
+    url = "https://text.pollinations.ai/"  # URL da API Pollinations
+    headers = {
+        'Content-Type': 'application/json',
+    }
+    payload = {
+        'messages': [
+            {'role': 'user', 'content': f"Rewrite the following text to have a tone that is {sentiment}:\n\n{description}.Be faityfull to the original text."}
+        ],
+        'seed': 42,
+        'model': 'mistral'  # Definindo o modelo (caso precise mudar, altere conforme o necessário)
+    }
+    
+    # Faz a requisição à API Pollinations
+    response = requests.post(url, headers=headers, json=payload)
+
+    print(f"Status Code: {response.status_code}")
+    print(f"Response Text: {response.text}")
+    
+    if response.status_code == 200:
+        return response.text
+    else:
+        print(f"Erro ao chamar API: {response.status_code}")
+        return None
+
 
 # Criar DataFrames separados
 df_positive = pd.DataFrame(columns=["description_original", "description_positive"])
@@ -73,10 +90,10 @@ elapsed_time = end_time - start_time
 print(f"Tempo total gasto: {elapsed_time:.2f} segundos")
 
 # Salva os datasets separados
-df_positive.to_csv("/home_cerberus/disk3/larissa.gomide/PKDD/dataset_positive.csv", index=False)
-df_very_positive.to_csv("/home_cerberus/disk3/larissa.gomide/PKDD/dataset_very_positive.csv", index=False)
-df_negative.to_csv("/home_cerberus/disk3/larissa.gomide/PKDD/dataset_negative.csv", index=False)
-df_very_negative.to_csv("/home_cerberus/disk3/larissa.gomide/PKDD/dataset_very_negative.csv", index=False)
+df_positive.to_csv("dataset_positive_f.csv", index=False)
+df_very_positive.to_csv("dataset_very_positive_f.csv", index=False)
+df_negative.to_csv("dataset_negative_f.csv", index=False)
+df_very_negative.to_csv("dataset_very_negative_f.csv", index=False)
 print("Arquivos salvos com sucesso")
 
 
