@@ -1,116 +1,88 @@
 import smtplib
-from email.mime.text import MIMEText
-from email.mime.multipart import MIMEMultipart
 import time
 import pandas as pd
-from transformers import pipeline
-import smtplib
+import requests
+import argparse
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
-import time
-import requests
 
-print("Começo do script")
-
-# Configurações do e-mail
-seu_email = "codigosecreto2025@gmail.com"
-senha = "bpij xclh mwqr sofe"
-destinatario = "laladg18@gmail.com"
-
-# Criando a mensagem
-msg = MIMEMultipart()
-msg["From"] = seu_email
-msg["To"] = destinatario
-msg["Subject"] = "Fim execução polarized_description.py"
-
-corpo = "Fim do script Python"
-msg.attach(MIMEText(corpo, "plain"))
-
-
-# Carrega o dataset original (ajuste o nome do arquivo se necessário)
-df = pd.read_csv("/home_cerberus/disk3/larissa.gomide/oficial/amostraGauss/sampled_SMALL_with_gen_scored.csv")
-print("Carregou a base de dados")
-
-# Função para reescrever frases com um viés específico (positivo ou negativo)
 def rewrite_description(description, sentiment):
-    url = "https://text.pollinations.ai/"  # URL da API Pollinations
-    headers = {
-        'Content-Type': 'application/json',
-    }
+    url = "https://text.pollinations.ai/"
+    headers = {'Content-Type': 'application/json'}
     payload = {
         'messages': [
-            {'role': 'user', 'content': f"Rewrite the following text to have a tone that is {sentiment}:\n\n{description}.Be faityfull to the original text."}
+            {'role': 'user', 'content': f"Rewrite the following text to have a tone that is {sentiment}:\n\n{description}. Be faithful to the original text. It must have the same amount of tokens."}
         ],
         'seed': 42,
-        'model': 'mistral'  # Definindo o modelo (caso precise mudar, altere conforme o necessário)
+        'model': 'mistral'
     }
-    
-    # Faz a requisição à API Pollinations
     response = requests.post(url, headers=headers, json=payload)
-
-    #print(f"Status Code: {response.status_code}")
-    #print(f"Response Text: {response.text}")
-    
     if response.status_code == 200:
         return response.text
     else:
         print(f"Erro ao chamar API: {response.status_code}")
         return None
 
-
-# Criar DataFrames separados
-df_positive = pd.DataFrame(columns=["description_original", "description_positive"])
-df_very_positive = pd.DataFrame(columns=["description_original", "description_very_positive"])
-df_negative = pd.DataFrame(columns=["description_original", "description_negative"])
-df_very_negative = pd.DataFrame(columns=["description_original", "description_very_negative"])
-
-# Inicia a contagem de tempo
-print("Inicia a contagem de tempo")
-start_time = time.time()
-
-# Processa cada linha do dataset
-for i, row in df.iterrows():
-    print(f"Row:{i} of {len(df)}")
-    original_text = row["Description"]
+def process_csv(csv_file):
+    df = pd.read_csv(csv_file)
+    print("Carregou a base de dados")
     
-    # Gera a versão positiva e negativa
-    positive_text = rewrite_description(original_text, "positive")
-    very_positive_text = rewrite_description(original_text, "very positive")
-    negative_text = rewrite_description(original_text, "negative")
-    very_negative_text = rewrite_description(original_text, "very negative")
+    df_positive = pd.DataFrame(columns=["description_original", "description_positive"])
+    df_very_positive = pd.DataFrame(columns=["description_original", "description_very_positive"])
+    df_negative = pd.DataFrame(columns=["description_original", "description_negative"])
+    df_very_negative = pd.DataFrame(columns=["description_original", "description_very_negative"])
+    
+    start_time = time.time()
+    for i, row in df.iterrows():
+        print(f"Processando linha {i+1} de {len(df)}")
+        original_text = row["Description"]
+        
+        positive_text = rewrite_description(original_text, "positive")
+        very_positive_text = rewrite_description(original_text, "very positive")
+        negative_text = rewrite_description(original_text, "negative")
+        very_negative_text = rewrite_description(original_text, "very negative")
+        
+        df_positive.loc[i] = [original_text, positive_text]
+        df_very_positive.loc[i] = [original_text, very_positive_text]
+        df_negative.loc[i] = [original_text, negative_text]
+        df_very_negative.loc[i] = [original_text, very_negative_text]
+    
+    end_time = time.time()
+    print(f"Tempo total gasto: {end_time - start_time:.2f} segundos")
+    
+    df_positive.to_csv("dataset_positive_f.csv", index=False)
+    df_very_positive.to_csv("dataset_very_positive_f.csv", index=False)
+    df_negative.to_csv("dataset_negative_f.csv", index=False)
+    df_very_negative.to_csv("dataset_very_negative_f.csv", index=False)
+    print("Arquivos salvos com sucesso")
 
-    # Adiciona ao DataFrame correspondente
-    df_positive.loc[i] = [original_text, positive_text]
-    df_very_positive.loc[i] = [original_text, very_positive_text]
-    df_negative.loc[i] = [original_text, negative_text]
-    df_very_negative.loc[i] = [original_text, very_negative_text]
+def send_email():
+    seu_email = "codigosecreto2025@gmail.com"
+    senha = "bpij xclh mwqr sofe"
+    destinatario = "laladg18@gmail.com"
+    
+    msg = MIMEMultipart()
+    msg["From"] = seu_email
+    msg["To"] = destinatario
+    msg["Subject"] = "Fim execução polarized_description.py"
+    msg.attach(MIMEText("Fim do script Python", "plain"))
+    
+    try:
+        servidor = smtplib.SMTP("smtp.gmail.com", 587)
+        servidor.starttls()
+        servidor.login(seu_email, senha)
+        servidor.sendmail(seu_email, destinatario, msg.as_string())
+        servidor.quit()
+        print("E-mail enviado com sucesso!")
+    except Exception as e:
+        print(f"Erro ao enviar e-mail: {e}")
 
-# Tempo total de processamento
-end_time = time.time()
-elapsed_time = end_time - start_time
-print(f"Tempo total gasto: {elapsed_time:.2f} segundos")
+#Processa o df_sample 
 
-# Salva os datasets separados
-df_positive.to_csv("dataset_positive_f.csv", index=False)
-df_very_positive.to_csv("dataset_very_positive_f.csv", index=False)
-df_negative.to_csv("dataset_negative_f.csv", index=False)
-df_very_negative.to_csv("dataset_very_negative_f.csv", index=False)
-print("Arquivos salvos com sucesso")
-
-
-# Simulação de envio (print antes de enviar)
-print("De:", seu_email)
-print("Para:", destinatario)
-print("Assunto:", msg["Subject"])
-print("Corpo:\n", corpo)
-
-# Descomente a linha abaixo para enviar o e-mail após testar
-try:
-     servidor = smtplib.SMTP("smtp.gmail.com", 587)
-     servidor.starttls()
-     servidor.login(seu_email, senha)
-     servidor.sendmail(seu_email, destinatario, msg.as_string())
-     servidor.quit()
-     print("E-mail enviado com sucesso!")
-except Exception as e:
-     print(f"Erro ao enviar e-mail: {e}")
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="Processa um CSV para gerar descrições polarizadas e envia e-mail ao final.")
+    parser.add_argument("csv_file", help="Caminho para o arquivo CSV de entrada")
+    args = parser.parse_args()
+    
+    process_csv(args.csv_file)
+    send_email()

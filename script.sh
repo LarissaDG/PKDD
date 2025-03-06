@@ -25,7 +25,7 @@ export MPLCONFIGDIR='/scratch/larissa.gomide/minha_home/.matplotlib'
 
 cd /home_cerberus/disk3/larissa.gomide/PKDD
 
-python3 /home_cerberus/disk3/larissa.gomide/PKDD/polarized_description.py || echo "Erro ao executar polarized_description.py."
+python3 /home_cerberus/disk3/larissa.gomide/PKDD/polarized_description.py "/home_cerberus/disk3/larissa.gomide/oficial/amostraGauss/sampled_dataset.csv"|| echo "Erro ao executar polarized_description.py."
 
 python3 /home_cerberus/disk3/larissa.gomide/PKDD/manda_email.py || echo "Erro ao executar manda_email.py."
 
