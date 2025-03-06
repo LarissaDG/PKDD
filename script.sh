@@ -1,7 +1,7 @@
 #!/bin/bash
 #SBATCH --job-name=my_little_job  # Job name
 #SBATCH --time=20:00:00           # Time limit hrs:min:sec
-#SBATCH -w gorgona4
+#SBATCH -w gorgona6
 #SBATCH -N 1                        # Number of nodes
 #SBATCH --mail-type=ALL
 #SBATCH --mail-user=larissa.gomide@dcc.ufmg.br
@@ -25,9 +25,13 @@ export MPLCONFIGDIR='/scratch/larissa.gomide/minha_home/.matplotlib'
 
 cd /home_cerberus/disk3/larissa.gomide/PKDD
 
-python3 /home_cerberus/disk3/larissa.gomide/PKDD/polarized_description.py || echo "Erro ao executar polarized_description.py."
+#python3 "/home_cerberus/disk3/larissa.gomide/PKDD/polarized_description.py" || echo "Erro ao executar polarized_description.py."
 
-python3 /home_cerberus/disk3/larissa.gomide/PKDD/manda_email.py || echo "Erro ao executar manda_email.py."
+python3 "/home_cerberus/disk3/larissa.gomide/PKDD/generated_janus.py" || echo "Erro ao executar generated_janus.py."
+
+python3 "/home_cerberus/disk3/larissa.gomide/PKDD/get_scores.py" || echo "Erro ao executar get_scores.py."
+
+python3 "/home_cerberus/disk3/larissa.gomide/PKDD/manda_email.py" || echo "Erro ao executar manda_email.py."
 
 hostname   # just show the allocated node
 
