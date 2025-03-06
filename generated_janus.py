@@ -61,6 +61,8 @@ def generate_token_based(mmgpt, vl_chat_processor, prompt, temperature=1.0, para
     image.save(save_path)
 
 # Função principal que processa o CSV e gera as imagens
+# Preciso de um df que tenha as descrições ("Original, Positiva, Muito Positiva, Negativa, Muito negativa")
+# Gerar imagens e novos df frames "Positiva/Negativa" "Muito Positiva/Muito negativa" 
 def main():
     if len(sys.argv) != 2:
         print("Uso: python code.py <caminho_do_csv>")
